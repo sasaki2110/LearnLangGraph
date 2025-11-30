@@ -9,7 +9,14 @@ langgraph>=0.1.0
 # 注意: Python 3.10以上が必要
 langchain>=0.1.0
 
-# プロバイダー固有のパッケージ（必要に応じてコメントアウトを解除）
-# OpenAI: openai
+# LangChain OpenAI統合（OpenAI APIを使用する場合に必要）
+langchain-openai>=0.1.0
+
+# 環境変数管理
+python-dotenv>=1.0.0
+
+# プロバイダー固有のパッケージ
+# OpenAI APIを使用する場合
+openai>=1.0.0
 # Anthropic: anthropic
 
