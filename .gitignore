@@ -1,0 +1,11 @@
+# ワークファイル
+zzz.md
+
+# Python仮想環境
+venv/
+env/
+ENV/
+.venv/
+
+# serena
+.serena/

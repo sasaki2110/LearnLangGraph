@@ -1,0 +1,15 @@
+# LangGraph 学習プロジェクト - 依存関係
+# このファイルに必要なパッケージを追記し、以下のコマンドでインストールします:
+# pip install -r requirements.txt
+
+# LangGraph - AIエージェントのオーケストレーションフレームワーク
+langgraph>=0.1.0
+
+# LangChain - LLMやツールとの統合（推奨）
+# 注意: Python 3.10以上が必要
+langchain>=0.1.0
+
+# プロバイダー固有のパッケージ（必要に応じてコメントアウトを解除）
+# OpenAI: openai
+# Anthropic: anthropic
+
