@@ -193,6 +193,17 @@ print("\n" + "="*50)
 print("エージェントの実行")
 print("="*50)
 
+# テストケース0: 挨拶
+print("\n【テストケース0】こんにちは")
+messages = [HumanMessage(content="こんにちは")]
+result = agent.invoke({"messages": messages, "llm_calls": 0})
+
+print("\n結果:")
+for m in result["messages"]:
+    m.pretty_print()
+
+print(f"\nLLM呼び出し回数: {result['llm_calls']}")
+
 # テストケース1: 加算
 print("\n【テストケース1】3 + 4 を計算")
 messages = [HumanMessage(content="Add 3 and 4.")]

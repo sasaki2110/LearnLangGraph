@@ -107,7 +107,7 @@ class MessagesState(TypedDict):
 
 ### 3. モデルノードの定義
 
-```python
+```111:125:p12_quickstart.py
 def llm_call(state: dict):
     """LLMがツールを呼び出すかどうかを決定します。"""
     return {
@@ -115,7 +115,7 @@ def llm_call(state: dict):
             model_with_tools.invoke(
                 [
                     SystemMessage(
-                        content="You are a helpful assistant..."
+                        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
                     )
                 ]
                 + state["messages"]
@@ -131,6 +131,118 @@ def llm_call(state: dict):
 - **`model_with_tools.invoke`**: ツールがバインドされたモデルを呼び出し
   - LLMは、必要に応じてツールを呼び出すか、直接回答を返すかを決定します
 - **`llm_calls`**: 呼び出し回数をインクリメント
+
+#### 3.1 `model_with_tools.invoke`に送られるプロンプトの詳細
+
+**重要な質問**: `model_with_tools.invoke`を呼び出す際、明示的に渡しているメッセージリスト（`SystemMessage` + `state["messages"]`）だけが送られるのでしょうか？それとも、`bind_tools`によって追加の情報が含まれるのでしょうか？
+
+**答え**: `bind_tools`は、**ツールのスキーマ（関数定義）をAPIリクエストに追加**しますが、**明示的な「ツールを使え」というプロンプトは追加しません**。
+
+##### 実際にLLMに送られる情報
+
+`model_with_tools.invoke`を呼び出すと、以下の情報がLLMに送られます：
+
+1. **明示的に渡したメッセージ**:
+   ```python
+   [
+       SystemMessage(
+           content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+       )
+   ] + state["messages"]
+   ```
+
+2. **`bind_tools`によって追加されるツール定義**:
+   - ツールの名前、説明、パラメータのスキーマ（型、必須/任意など）
+   - これは**APIリクエストの`tools`パラメータ**として送信されます
+   - メッセージの内容には含まれませんが、LLMがツールを呼び出すための情報として提供されます
+
+##### 具体的な例（OpenAI APIの場合）
+
+OpenAI APIに送信されるリクエストは、以下のような構造になります：
+
+```json
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+    },
+    {
+      "role": "user",
+      "content": "Add 3 and 4."
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "add",
+        "description": "Adds `a` and `b`.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "a": {"type": "integer", "description": "First int"},
+            "b": {"type": "integer", "description": "Second int"}
+          },
+          "required": ["a", "b"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "multiply",
+        "description": "Multiply `a` and `b`.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "a": {"type": "integer", "description": "First int"},
+            "b": {"type": "integer", "description": "Second int"}
+          },
+          "required": ["a", "b"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "divide",
+        "description": "Divide `a` and `b`.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "a": {"type": "integer", "description": "First int"},
+            "b": {"type": "integer", "description": "Second int"}
+          },
+          "required": ["a", "b"]
+        }
+      }
+    }
+  ]
+}
+```
+
+##### 重要なポイント
+
+1. **ツール定義は自動的に追加される**: `bind_tools`を呼び出すと、ツールのスキーマがAPIリクエストに含まれます
+2. **明示的な「ツールを使え」というプロンプトはない**: モデル自体が、ツール定義を見て、必要に応じてツールを呼び出すかどうかを判断します
+3. **SystemMessageの役割**: システムメッセージは、エージェントの役割や動作を定義しますが、ツールの使用方法については、ツール定義（`tools`パラメータ）から推論されます
+4. **ツールの説明文（docstring）が重要**: ツールの`@tool`デコレータで定義されたdocstringは、LLMがツールを選択する際の重要な情報となります
+
+##### ツール利用を促すには
+
+もし明示的にツール利用を促したい場合は、`SystemMessage`の内容を変更できます：
+
+```python
+SystemMessage(
+    content="You are a helpful assistant tasked with performing arithmetic on a set of inputs. "
+            "You have access to tools (add, multiply, divide) that you should use when performing calculations. "
+            "Always use the appropriate tool to calculate the answer."
+)
+```
+
+ただし、多くの場合、ツール定義が提供されていれば、モデルは適切にツールを使用します。
 
 ### 4. ツールノードの定義
 
@@ -171,16 +283,17 @@ def should_continue(state: MessagesState) -> Literal["tool_node", END]:
 
 ### 6. エージェントの構築とコンパイル
 
-```python
-from langgraph.graph import StateGraph, START, END
+このセクションは、LangGraphの**最も重要な部分**です。ここで、個別に定義したノード（関数）を組み合わせて、実際に動作するエージェントを構築します。
 
+```169:185:p12_quickstart.py
+# ワークフローの構築
 agent_builder = StateGraph(MessagesState)
 
 # ノードの追加
 agent_builder.add_node("llm_call", llm_call)
 agent_builder.add_node("tool_node", tool_node)
 
-# エッジの追加
+# ノードを接続するエッジの追加
 agent_builder.add_edge(START, "llm_call")
 agent_builder.add_conditional_edges(
     "llm_call",
@@ -189,35 +302,220 @@ agent_builder.add_conditional_edges(
 )
 agent_builder.add_edge("tool_node", "llm_call")
 
+# エージェントのコンパイル
 agent = agent_builder.compile()
 ```
 
-#### グラフの構築手順
+#### 6.1 StateGraphとは何か
 
-1. **`StateGraph(MessagesState)`**: 状態グラフを作成
-2. **`add_node`**: ノードを追加
-   - `"llm_call"`: LLM呼び出しノード
-   - `"tool_node"`: ツール実行ノード
-3. **`add_edge(START, "llm_call")`**: 開始からLLM呼び出しノードへ
-4. **`add_conditional_edges`**: 条件付きエッジ
-   - `"llm_call"`から`should_continue`関数の結果に基づいて分岐
-   - 可能な遷移先: `["tool_node", END]`
-5. **`add_edge("tool_node", "llm_call")`**: ツール実行後、再度LLM呼び出しへ
-6. **`compile()`**: グラフをコンパイルして実行可能なエージェントを作成
+**`StateGraph`**は、LangGraphの核心となるクラスです。これは、**状態を持つ有向グラフ（Directed Graph）**を構築するためのビルダーパターンを提供します。
 
-#### グラフの構造
+- **グラフ**: ノード（処理単位）とエッジ（接続）で構成されるデータ構造
+- **状態**: グラフの実行中に保持されるデータ（この例では`MessagesState`）
+- **有向**: エッジに方向があり、一方向にのみデータが流れる
+
+```python
+agent_builder = StateGraph(MessagesState)
+```
+
+この行で、`MessagesState`型の状態を管理するグラフビルダーを作成します。このビルダーにノードとエッジを追加していくことで、エージェントの構造を定義します。
+
+#### 6.2 ノードの追加
+
+ノードは、グラフ内で実行される処理単位です。各ノードは関数として実装され、状態を受け取り、状態を返します。
+
+```python
+agent_builder.add_node("llm_call", llm_call)
+agent_builder.add_node("tool_node", tool_node)
+```
+
+- **`add_node(name, function)`**: グラフにノードを追加
+  - `name`: ノードの識別子（文字列）
+  - `function`: ノードで実行される関数（状態を受け取り、状態を返す）
+
+**重要なポイント**:
+- ノード名（`"llm_call"`, `"tool_node"`）は、エッジで参照する際に使用されます
+- 各ノードは独立して定義され、グラフ構築時に接続されます
+- ノードの実行順序は、エッジの定義によって決定されます
+
+#### 6.3 エッジの追加
+
+エッジは、ノード間の接続を定義します。LangGraphには2種類のエッジがあります：
+
+##### 6.3.1 通常エッジ（Unconditional Edge）
+
+```python
+agent_builder.add_edge(START, "llm_call")
+agent_builder.add_edge("tool_node", "llm_call")
+```
+
+- **`add_edge(from_node, to_node)`**: 無条件で次のノードへ遷移
+  - `START`: グラフの開始点（特別な定数）
+  - `END`: グラフの終了点（特別な定数）
+
+**動作**:
+- `START → "llm_call"`: エージェント開始時、必ず`llm_call`ノードが実行される
+- `"tool_node" → "llm_call"`: ツール実行後、必ず再度`llm_call`ノードが実行される
+
+##### 6.3.2 条件付きエッジ（Conditional Edge）
+
+```python
+agent_builder.add_conditional_edges(
+    "llm_call",
+    should_continue,
+    ["tool_node", END]
+)
+```
+
+- **`add_conditional_edges(from_node, condition_func, mapping)`**: 実行時に次のノードを動的に決定
+  - `from_node`: 条件分岐の起点となるノード
+  - `condition_func`: 状態を評価して次のノードを決定する関数
+  - `mapping`: 可能な遷移先のリスト
+
+**動作メカニズム**:
+
+1. `"llm_call"`ノードが実行される
+2. 状態が`should_continue`関数に渡される
+3. `should_continue`が状態を評価し、次のノード名を返す
+   - `"tool_node"`を返す → ツールノードへ遷移
+   - `END`を返す → エージェント終了
+4. 返された値に基づいて、対応するノードへ遷移
+
+**`should_continue`関数の再確認**:
+
+```150:159:p12_quickstart.py
+def should_continue(state: MessagesState) -> Literal["tool_node", END]:
+    """LLMがツールを呼び出したかどうかを確認します。"""
+    messages = state["messages"]
+    last_message = messages[-1]
+    
+    # LLMがツールを呼び出した場合、アクションを実行
+    if last_message.tool_calls:
+        return "tool_node"
+    # それ以外の場合、停止（ユーザーに返信）
+    return END
+```
+
+この関数は、最後のメッセージに`tool_calls`が含まれているかどうかをチェックし、それに基づいて次のノードを決定します。
+
+**重要なポイント**:
+- 条件付きエッジにより、**実行時の状態に応じて動的にフローを制御**できます
+- これが、LangGraphが「エージェント」を実現するための核心的な機能です
+- `mapping`リスト（`["tool_node", END]`）は、`condition_func`が返す可能性のある値を列挙します
+
+#### 6.4 コンパイル
+
+```python
+agent = agent_builder.compile()
+```
+
+**`compile()`**は、構築したグラフを**実行可能なエージェント**に変換します。
+
+**コンパイル時に何が起こるか**:
+
+1. **グラフの検証**: ノードとエッジの接続が正しいかチェック
+2. **最適化**: グラフの構造を最適化（可能な場合）
+3. **実行エンジンの準備**: 状態管理、エッジの評価、ノードの実行などの仕組みを準備
+
+**コンパイル後の`agent`オブジェクト**:
+- `agent.invoke(state)`: エージェントを実行し、最終状態を返す
+- `agent.stream(state)`: エージェントをストリーミング実行（各ノードの実行結果を順次返す）
+- `agent.get_graph()`: グラフの構造を可視化
+
+**重要なポイント**:
+- コンパイルは**一度だけ**行います
+- コンパイル後は、同じエージェントを何度でも実行できます
+- コンパイル時にエラーが発生した場合、グラフの定義に問題がある可能性があります
+
+#### 6.5 グラフの完全な構造
+
+構築されたグラフの構造を視覚化すると、以下のようになります：
 
 ```
-START
-  ↓
-llm_call ──[ツール呼び出しあり]──→ tool_node ──→ llm_call
-  │                                        ↑         │
-  │                                        │         │
-  └──[ツール呼び出しなし]───────────────┘         │
-                                                    │
-  ──────────────────────────────────────────────────┘
-  (最終回答が生成されたらEND)
+                    START
+                      ↓
+                  llm_call
+                      │
+                      ├─[should_continue判定]─┐
+                      │                        │
+                      │                        │
+        [tool_callsあり]              [tool_callsなし]
+                      │                        │
+                      ↓                        ↓
+                tool_node                     END
+                      │
+                      │ (無条件エッジ)
+                      ↓
+                  llm_call
+                      │
+                      ├─[should_continue判定]─┐
+                      │                        │
+                      │                        │
+        [tool_callsあり]              [tool_callsなし]
+                      │                        │
+                      ↓                        ↓
+                tool_node                     END
+                      │
+                      └─ (ループ可能) ─┘
 ```
+
+**実行フローの詳細**:
+
+1. **START → llm_call**: エージェント開始
+2. **llm_call**: LLMがユーザーの質問を分析
+   - ツールが必要な場合: `AIMessage`に`tool_calls`を含める
+   - ツールが不要な場合: 直接回答を含む`AIMessage`を返す
+3. **条件分岐（should_continue）**:
+   - `tool_calls`あり → `"tool_node"`へ
+   - `tool_calls`なし → `END`へ（エージェント終了）
+4. **tool_node → llm_call**: ツール実行後、必ず再度LLMを呼び出す
+   - ツールの結果を`ToolMessage`として状態に追加
+   - LLMがツールの結果を解釈し、最終回答を生成
+5. **再度条件分岐**: 最終回答にツール呼び出しが含まれていないため、`END`へ
+
+#### 6.6 なぜこの構造が重要なのか
+
+このグラフ構造により、以下のことが実現されます：
+
+1. **ループ処理**: `tool_node → llm_call`のループにより、複数のツールを連続して呼び出すことが可能
+2. **動的分岐**: 条件付きエッジにより、実行時に次の処理を決定
+3. **状態の永続化**: 各ノードが状態を更新し、次のノードに引き継がれる
+4. **拡張性**: 新しいノードやエッジを追加することで、エージェントの機能を拡張可能
+
+#### 6.7 実際の実行例
+
+「Add 3 and 4.」という質問に対する実行フロー：
+
+```
+1. START
+   ↓
+2. llm_call
+   入力: [HumanMessage("Add 3 and 4.")]
+   出力: AIMessage(tool_calls=[{"name": "add", "args": {"a": 3, "b": 4}}])
+   状態: {messages: [HumanMessage, AIMessage], llm_calls: 1}
+   ↓
+3. should_continue判定
+   → tool_callsあり → "tool_node"へ
+   ↓
+4. tool_node
+   入力: 状態（tool_callsを含む）
+   実行: add(3, 4) = 7
+   出力: ToolMessage(content="7", tool_call_id="...")
+   状態: {messages: [..., ToolMessage], llm_calls: 1}
+   ↓
+5. llm_call（再実行）
+   入力: 状態（ToolMessageを含む）
+   出力: AIMessage(content="3 + 4 = 7")
+   状態: {messages: [..., AIMessage], llm_calls: 2}
+   ↓
+6. should_continue判定
+   → tool_callsなし → ENDへ
+   ↓
+7. END
+   最終状態を返す
+```
+
+このように、グラフの構造により、エージェントは自動的に適切な順序でノードを実行し、状態を管理しながら処理を進めます。
 
 ### 7. エージェントの実行
 
