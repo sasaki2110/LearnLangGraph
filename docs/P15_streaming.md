@@ -109,6 +109,62 @@ for chunk in graph.stream(inputs, stream_mode="debug"):
 - デバッグ専用
 - パフォーマンスへの影響がある可能性
 
+**出力構造**:
+
+`debug`モードは、実行フローの詳細なトレース情報を提供します。各チャンクは以下の構造を持ちます：
+
+```python
+{
+    "step": 1,                    # ステップ番号
+    "timestamp": "2025-12-10T08:14:33.072672+00:00",  # イベントの実行時刻
+    "type": "task",              # イベントタイプ（"task" または "task_result"）
+    "payload": {                  # 詳細情報
+        "id": "...",             # イベントID
+        "name": "refine_topic",  # ノード名
+        "input": {...},          # 入力データ（type="task"の場合）
+        "result": {...},         # 結果データ（type="task_result"の場合）
+        "error": None            # エラー情報（エラーが発生した場合）
+    }
+}
+```
+
+**イベントタイプ**:
+
+1. **`type: "task"`** - ノードの実行開始
+   - `payload.input`: ノードへの入力データ
+   - `payload.name`: 実行されるノード名
+   - `payload.triggers`: トリガー情報
+
+2. **`type: "task_result"`** - ノードの実行完了
+   - `payload.result`: ノードの実行結果
+   - `payload.name`: 実行されたノード名
+   - `payload.error`: エラー情報（エラーが発生した場合）
+   - `payload.interrupts`: 割り込み情報
+
+**使用例**:
+
+```python
+for chunk in graph.stream(inputs, stream_mode="debug"):
+    event_type = chunk.get("type")
+    step = chunk.get("step")
+    payload = chunk.get("payload", {})
+    node_name = payload.get("name")
+    
+    if event_type == "task":
+        print(f"ステップ {step}: ノード '{node_name}' の実行開始")
+        print(f"入力: {payload.get('input')}")
+    elif event_type == "task_result":
+        print(f"ステップ {step}: ノード '{node_name}' の実行完了")
+        if payload.get("error"):
+            print(f"エラー: {payload.get('error')}")
+        else:
+            print(f"結果: {payload.get('result')}")
+```
+
+**注意点**:
+- `debug`モードは`messages`モードを網羅しません。LLMトークンも取得したい場合は、`stream_mode=["debug", "messages"]`を使用してください。
+- `debug`モードは`updates`や`values`と重複する情報を含む可能性があるため、同時に指定するのは非推奨です。
+
 ## 3. 基本的な使用例
 
 LangGraphのグラフは、ストリーム出力をイテレータとして生成する`stream`（同期）および`astream`（非同期）メソッドを提供しています。
@@ -662,7 +718,7 @@ for chunk in graph.stream(
 ### 10.1 `get_stream_writer()`の使用
 
 ```python
-from langgraph.streaming import get_stream_writer
+from langgraph.config import get_stream_writer
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict
 
@@ -675,18 +731,18 @@ def process_node(state: State):
     
     # 進行状況をストリーム
     if writer:
-        writer.write({"progress": 25, "status": "Starting processing"})
+        writer({"progress": 25, "status": "Starting processing"})
     
     # 処理のシミュレーション
     result = "Processing..."
     
     if writer:
-        writer.write({"progress": 50, "status": "Halfway done"})
+        writer({"progress": 50, "status": "Halfway done"})
     
     result = "Complete"
     
     if writer:
-        writer.write({"progress": 100, "status": "Finished"})
+        writer({"progress": 100, "status": "Finished"})
     
     return {"result": result}
 
@@ -731,7 +787,7 @@ for mode, chunk in graph.stream(
 ### 10.3 実践的な使用例: 進行状況の報告
 
 ```python
-from langgraph.streaming import get_stream_writer
+from langgraph.config import get_stream_writer
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict
 import time
@@ -753,7 +809,7 @@ def process_items(state: TaskState):
         # 進行状況をストリーム
         if writer:
             progress = int((i + 1) / total * 100)
-            writer.write({
+            writer({
                 "progress": progress,
                 "items_processed": i + 1,
                 "status": f"Processing item {i + 1}/{total}"
@@ -1143,7 +1199,7 @@ async def chat_stream(request: ChatRequest):
 ### 16.2 進行状況バーの実装
 
 ```python
-from langgraph.streaming import get_stream_writer
+from langgraph.config import get_stream_writer
 from tqdm import tqdm
 
 def process_with_progress(state):
@@ -1156,7 +1212,7 @@ def process_with_progress(state):
             time.sleep(0.01)
             
             if writer:
-                writer.write({"progress": i + 1})
+                writer({"progress": i + 1})
             
             pbar.update(1)
     
