@@ -398,11 +398,22 @@ for token, metadata in graph.stream(
     {"messages": [HumanMessage(content="Tell me a joke about programming.")]},
     stream_mode="messages",  # messagesモードでトークン単位のストリーミング
 ):
-    print(token, end="", flush=True)  # トークンを逐次表示
+    # tokenはAIMessageオブジェクトなので、content属性からテキストを取得
+    token_text = token.content if hasattr(token, 'content') else str(token)
+    print(token_text, end="", flush=True)  # トークンを逐次表示
     # metadataにはノード名、LLM呼び出し情報などが含まれる
 ```
 
+**重要な注意点**:
+- `token`は`AIMessage`オブジェクトです。テキストを取得するには`token.content`を使用します。
+- `token`を直接`print()`すると、オブジェクト全体が文字列として表示されてしまいます。
+- `hasattr(token, 'content')`でチェックすることで、異なる型にも対応できます。
+
 ### 7.2 メタデータの活用
+
+メタデータには、ノード名、LLM呼び出し情報、実行ステップ情報などが含まれます。メタデータを活用することで、より高度なストリーミング処理が可能になります。
+
+#### 基本的なメタデータの取得
 
 ```python
 for token, metadata in graph.stream(
@@ -410,10 +421,93 @@ for token, metadata in graph.stream(
     stream_mode="messages",
 ):
     # メタデータから情報を取得
-    node_name = metadata.get("node", "unknown")
-    llm_name = metadata.get("llm", "unknown")
+    # 注意: メタデータのキーは "langgraph_node" です（"node" ではありません）
+    node_name = metadata.get("langgraph_node", "unknown")
     
-    print(f"[{node_name}] Token: {token}")
+    # tokenはAIMessageオブジェクトなので、content属性からテキストを取得
+    token_text = token.content if hasattr(token, 'content') else str(token)
+    
+    print(f"[{node_name}] {token_text}")
+```
+
+#### メタデータの主なキー
+
+メタデータには以下のようなキーが含まれます：
+
+- `langgraph_node`: ノード名（例: "llm", "refine_topic"）
+- `langgraph_step`: 実行ステップ番号
+- `langgraph_path`: 実行パス
+- `ls_provider`: LLMプロバイダー名（例: "openai"）
+- `ls_model_name`: モデル名（例: "gpt-4o-mini"）
+- `ls_model_type`: モデルタイプ（例: "chat"）
+- `ls_temperature`: 温度パラメータ
+
+#### ノード名でフィルタリング
+
+複数のノードがある場合、特定のノードからのトークンのみを処理できます：
+
+```python
+target_node = "generate_summary"
+
+for token, metadata in graph.stream(
+    initial_state,
+    stream_mode="messages",
+):
+    node_name = metadata.get("langgraph_node", "unknown")
+    
+    # 特定のノードからのトークンのみを処理
+    if node_name == target_node:
+        token_text = token.content if hasattr(token, 'content') else str(token)
+        print(token_text, end="", flush=True)
+```
+
+#### ノードごとにトークンを集計
+
+各ノードから生成されたトークン数を集計できます：
+
+```python
+from collections import defaultdict
+
+node_token_counts = defaultdict(int)
+node_texts = defaultdict(str)
+
+for token, metadata in graph.stream(
+    initial_state,
+    stream_mode="messages",
+):
+    token_text = token.content if hasattr(token, 'content') else str(token)
+    node_name = metadata.get("langgraph_node", "unknown")
+    
+    node_token_counts[node_name] += 1
+    node_texts[node_name] += token_text
+
+# 集計結果を表示
+for node_name, count in node_token_counts.items():
+    print(f"ノード {node_name}: {count} トークン")
+```
+
+#### メタデータが全トークンで同じかどうか
+
+メタデータは、同じLLM呼び出し内の全トークンで同じ内容が設定されます。これは、ノード名やLLM呼び出し情報が同じであることを意味します。
+
+```python
+metadata_samples = []
+
+for i, (token, metadata) in enumerate(graph.stream(
+    initial_state,
+    stream_mode="messages",
+)):
+    # 最初、中間、最後のトークンでメタデータを記録
+    if i == 0:
+        metadata_samples.append(("最初のトークン", metadata.copy()))
+    elif i == 10:
+        metadata_samples.append(("10番目のトークン", metadata.copy()))
+    elif i % 20 == 0:
+        metadata_samples.append((f"{i}番目のトークン", metadata.copy()))
+
+# メタデータを比較（全トークンで同じ内容が設定されていることを確認）
+for label, meta in metadata_samples:
+    print(f"{label}: ノード名 = {meta.get('langgraph_node', 'N/A')}")
 ```
 
 ### 7.3 複数のモードとLLMトークンの組み合わせ
