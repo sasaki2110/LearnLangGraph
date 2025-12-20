@@ -17,6 +17,7 @@ from operator import add
 class State(TypedDict):
     """グラフの状態を定義"""
     foo: str
+    #foo: Annotated[str, add]
     bar: Annotated[list[str], add]  # リデューサを使用してリストに追加
 
 
@@ -56,6 +57,8 @@ def main():
     print("2. チェックポインタの作成")
     print("-" * 60)
     checkpointer = MemorySaver()
+    # プロセス終了後も永続可する場合は、こんな感じ
+    # checkpointer = PostgresSaver.from_conn_string("postgresql://user:password@localhost:5432/dbname")
     print("✓ MemorySaver を作成しました")
     print()
 
