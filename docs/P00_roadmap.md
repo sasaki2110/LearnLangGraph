@@ -66,6 +66,50 @@
   - エラーからの復旧
   - チェックポイントと再開
 
+- **[P22: Time Travel](./P22_timetravel.md)**
+  - 状態の履歴管理
+  - 過去の状態へのアクセス
+  - デバッグと分析
+
+### 実践・運用編
+
+- **[P23: Application Structure](./P23_application_structure.md)** (予定)
+  - アプリケーションの構造化
+  - プロジェクト構成のベストプラクティス
+  - スケーラブルな設計パターン
+  - 参考: https://docs.langchain.com/oss/python/langgraph/application-structure
+
+- **[P24: Testing](./P24_test.md)** (予定)
+  - LangGraphアプリケーションのテスト方法
+  - ユニットテストと統合テスト
+  - モックとフィクスチャの活用
+  - 参考: https://docs.langchain.com/oss/python/langgraph/test
+
+- **[P25: LangGraph Studio](./P25_studio.md)** (予定)
+  - LangGraph Studioの使い方
+  - 視覚的なグラフ編集
+  - デバッグと開発支援
+  - 参考: https://docs.langchain.com/oss/python/langgraph/studio
+
+- **[P26: UI](./P26_ui.md)** (予定)
+  - ユーザーインターフェースの構築
+  - チャットUIの実装
+  - リアルタイム更新の実装
+  - 参考: https://docs.langchain.com/oss/python/langgraph/ui
+
+- **[P27: Deploy](./P27_deploy.md)** (予定)
+  - 本番環境へのデプロイ
+  - クラウドプラットフォームへの展開
+  - スケーリングとパフォーマンス最適化
+  - 参考: https://docs.langchain.com/oss/python/langgraph/deploy
+
+- **[P28: Observability](./P28_observability.md)** (予定)
+  - LangSmithを使った可観測性
+  - ログとトレーシング
+  - モニタリングとアラート
+  - パフォーマンス分析
+  - 参考: https://docs.langchain.com/oss/python/langgraph/observability
+
 ## 🎯 推奨学習パス
 
 ### 初心者向けパス
@@ -98,6 +142,26 @@ P19 (Subgraphs)
 P20 (Memory)
   ↓
 P21 (Durable Execution)
+  ↓
+P22 (Time Travel)
+```
+
+### 実用化・運用パス
+
+```
+P11-P22 (基礎・中級・上級編を完了)
+  ↓
+P23 (Application Structure) - アプリケーション構造
+  ↓
+P24 (Testing) - テスト
+  ↓
+P25 (LangGraph Studio) - 開発ツール
+  ↓
+P26 (UI) - ユーザーインターフェース
+  ↓
+P27 (Deploy) - デプロイ
+  ↓
+P28 (Observability) - 可観測性・モニタリング
 ```
 
 ## 📖 各トピックの概要
@@ -141,6 +205,29 @@ Graph APIの代替として、関数型スタイルで実装する方法。
 #### P21: Durable Execution
 長時間実行されるエージェントの管理と、エラーからの復旧メカニズム。
 
+#### P22: Time Travel
+状態の履歴管理により、過去の状態にアクセスしてデバッグや分析を行う方法。
+
+### 実践・運用編
+
+#### P23: Application Structure
+実用的なLangGraphアプリケーションを構築するための構造化とプロジェクト構成のベストプラクティス。
+
+#### P24: Testing
+LangGraphアプリケーションの品質を保証するためのテスト戦略と実装方法。
+
+#### P25: LangGraph Studio
+視覚的なグラフ編集とデバッグを可能にするLangGraph Studioの活用方法。
+
+#### P26: UI
+エンドユーザー向けのインターフェース構築と、リアルタイム更新の実装。
+
+#### P27: Deploy
+本番環境へのデプロイと、スケーリング・パフォーマンス最適化の方法。
+
+#### P28: Observability
+LangSmithを使った可観測性の実現と、ログ・トレーシング・モニタリングの設定。
+
 ## 🔗 参考資料
 
 - [公式ドキュメント](https://docs.langchain.com/oss/python/langgraph/overview)
@@ -162,7 +249,9 @@ Graph APIの代替として、関数型スタイルで実装する方法。
 - ✅ エージェントとワークフローを設計・実装できる
 - ✅ ストリーミング、永続化などの実用的な機能を実装できる
 - ✅ 複雑なエージェントシステムを構築できる
+- ✅ テスト可能で保守性の高いアプリケーションを構築できる
 - ✅ 本番環境で動作するエージェントをデプロイできる
+- ✅ 運用中のエージェントをモニタリング・デバッグできる
 
 ---
 
