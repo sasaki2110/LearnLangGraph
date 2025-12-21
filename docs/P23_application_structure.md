@@ -36,8 +36,16 @@ my-app/
 │   │   └── state.py      # グラフの状態定義
 │   ├── __init__.py
 │   └── agent.py          # グラフを構築するコード
+├── tests/                 # テストコード（推奨）
+│   ├── __init__.py
+│   ├── conftest.py       # 共通フィクスチャ
+│   ├── test_nodes.py     # ノードのユニットテスト
+│   ├── test_tools.py     # ツールのユニットテスト
+│   ├── test_graph.py     # グラフの統合テスト
+│   └── test_integration.py  # エンドツーエンドテスト
 ├── .env                   # 環境変数（オプション）
 ├── requirements.txt      # パッケージ依存関係
+├── pytest.ini            # pytest設定（オプション）
 └── langgraph.json        # LangGraph設定ファイル
 ```
 
@@ -52,6 +60,21 @@ my-app/
   - **`state.py`**: 状態（State）の定義
   - **`nodes.py`**: ノード関数の実装
   - **`tools.py`**: ツールの定義
+
+#### `tests/` - テストコード（推奨）
+
+テストコードは、実装コードとは別の`tests/`ディレクトリに配置することを推奨します。これにより、以下の利点が得られます：
+
+- **明確な分離**: 実装コードとテストコードが明確に分離される
+- **保守性**: テストコードの管理が容易になる
+- **デプロイ時の除外**: 本番環境にテストコードを含めないようにできる
+
+**注意**: テストコードを実装ファイルと同じファイルに記述することも可能ですが、以下の理由から推奨されません：
+- ファイルサイズが大きくなり、可読性が低下する
+- 本番環境にテストコードが含まれる可能性がある
+- テストの実行と管理が困難になる
+
+詳細は[Testing](./P24_test.md)のドキュメントを参照してください。
 
 #### `requirements.txt` - 依存関係
 
@@ -218,11 +241,11 @@ dependencies = [
 
 ## グラフの定義
 
-### グラフのエクスポート方法
+### グラフの定義方法
 
-グラフは、Pythonファイルから変数としてエクスポートする必要があります。
+グラフは、Pythonファイルのモジュールレベルで変数として定義する必要があります。`langgraph.json`では、この変数を参照することでグラフを読み込みます。
 
-#### 方法1: コンパイル済みグラフをエクスポート
+#### 方法1: コンパイル済みグラフを変数として定義
 
 ```python
 # my_agent/agent.py
@@ -236,11 +259,14 @@ graph.add_node("process", process_node)
 graph.add_edge(START, "process")
 graph.add_edge("process", END)
 
-# コンパイルしてエクスポート
+# コンパイルしてモジュールレベルの変数に代入
+# langgraph.jsonでは "./my_agent/agent.py:graph" として参照可能
 graph = graph.compile()
 ```
 
-#### 方法2: グラフ構築関数をエクスポート
+**注意**: `graph = graph.compile()` は、コンパイル済みグラフを`graph`変数に代入しているだけです。この変数はモジュールレベルで定義されているため、`langgraph.json`から `"./my_agent/agent.py:graph"` のように参照できます。
+
+#### 方法2: グラフ構築関数を使用
 
 ```python
 # my_agent/agent.py
@@ -256,7 +282,8 @@ def build_graph():
     graph.add_edge("process", END)
     return graph.compile()
 
-# 関数をエクスポート（langgraph.jsonで呼び出し可能）
+# 関数を呼び出してモジュールレベルの変数に代入
+# langgraph.jsonでは "./my_agent/agent.py:graph" として参照可能
 graph = build_graph()
 ```
 
@@ -415,6 +442,41 @@ def process_node(state: MyState) -> dict:
     # 型安全な処理
     ...
 ```
+
+### 7. テストコードの分離
+
+テストコードは実装コードとは別の`tests/`ディレクトリに配置します。
+
+```
+my-app/
+├── my_agent/              # 実装コード
+│   ├── agent.py
+│   └── utils/
+│       ├── nodes.py
+│       └── tools.py
+├── tests/                 # テストコード
+│   ├── __init__.py
+│   ├── conftest.py       # 共通フィクスチャ
+│   ├── test_nodes.py    # ノードのユニットテスト
+│   ├── test_tools.py     # ツールのユニットテスト
+│   ├── test_graph.py     # グラフの統合テスト
+│   └── test_integration.py  # エンドツーエンドテスト
+└── pytest.ini            # pytest設定
+```
+
+**テストを別ファイルにしない場合の問題点**:
+
+- **ファイルサイズ**: 実装ファイルが大きくなり、可読性が低下
+- **本番環境への混入**: テストコードが本番環境に含まれる可能性
+- **実行と管理**: テストの実行と管理が困難
+
+**推奨される構造**:
+
+- 実装コード: `my_agent/`ディレクトリ
+- テストコード: `tests/`ディレクトリ
+- テストは実装コードをインポートして使用
+
+詳細は[Testing](./P24_test.md)のドキュメントを参照してください。
 
 ## 実装例
 
