@@ -102,9 +102,9 @@ Python 3.14を使用している場合、以下のような警告が表示され
 UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
 ```
 
-**この警告は無視して問題ありません。** コードは正常に動作します。この警告は、LangChainが内部的にPydantic V1の後方互換性レイヤーを使用しているために表示されますが、実際の動作には影響しません。
+**⚠️ 重要**: この警告は無視できません。後続の学習（特に[LangGraph Studio](./P25_studio.md)を使用する場合）で、`langgraph-cli[inmem]`がPython 3.14を公式にサポートしていないため、`jsonschema-rs`のビルドエラーが発生する可能性があります。
 
-警告を抑制したい場合は、`p11_install_check.py` のように `warnings` モジュールを使用してフィルタリングできます。
+**推奨**: Python 3.13にダウングレードしてください。Python 3.13を使用することで、LangGraph Studioを含むすべての機能が正常に動作します。
 
 ### 手動での動作確認
 
