@@ -12,3 +12,6 @@ ENV/
 
 # serena
 .serena/
+
+# LangGraph API キャッシュとチェックポイント（実行時に自動生成される）
+.langgraph_api/
