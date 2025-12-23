@@ -20,10 +20,13 @@ LangGraphアプリケーションを本番環境にデプロイするには、�
 
 LangSmith Cloudは、エージェントワークロード専用に設計された完全管理型のホスティングプラットフォームです。GitHubリポジトリから直接デプロイでき、LangSmithがインフラ、スケーリング、運用を管理します。
 
+**⚠️ 重要**: LangSmith Cloudへのデプロイには、有料プラン（Plus Plan以上）への加入が必要です。無料プラン（Developer Plan）ではデプロイ機能は利用できません。
+
 ### 前提条件
 
 - **GitHubアカウント**: コードをGitHubリポジトリにプッシュ
-- **LangSmithアカウント**: [smith.langchain.com](https://smith.langchain.com)で無料アカウントを作成
+- **LangSmithアカウント**: [smith.langchain.com](https://smith.langchain.com)でアカウントを作成
+- **有料プラン**: LangSmithの有料プラン（Plus Plan以上）への加入が必要
 
 ### デプロイ手順
 

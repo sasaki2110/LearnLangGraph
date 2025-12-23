@@ -21,6 +21,37 @@
 - **LangSmithアカウント**: [smith.langchain.com](https://smith.langchain.com)で無料アカウントを作成（またはログイン）
 - **LangSmith APIキー**: [APIキー作成ガイド](https://docs.langchain.com/langsmith/create-account-api-key#create-an-api-key)に従ってAPIキーを作成
 
+## 料金プランについて
+
+LangSmithの可観測性機能の多くは無料プラン（Developer Plan）でも利用できますが、一部の機能や使用量に応じて有料プランが必要な場合があります。
+
+### 無料プランでも利用可能な機能
+
+以下の機能は無料プラン（Developer Plan）でも利用できます：
+
+- **基本的なトレーシング**: 月間5,000 base tracesまで無料
+- **モニタリングとアラート**: 基本的なモニタリングとアラート機能
+- **カスタムダッシュボード**: ダッシュボードの作成とカスタマイズ
+- **オンライン/オフライン評価**: 評価機能の利用
+- **データセット収集**: データセットの作成と管理
+- **アノテーションキュー**: 人間によるフィードバックの収集
+- **Prompt HubとPlayground**: プロンプトの管理とテスト
+
+### 有料プランが必要な機能・制限
+
+以下の場合、有料プラン（Plus Plan以上）が必要または推奨されます：
+
+- **トレース数の上限**: 月間5,000トレースを超える場合
+  - 無料プラン: 月間5,000 base tracesまで無料、超過分は$0.50 per 1k traces
+  - Plus Plan: 月間10,000 base tracesまで無料、超過分は$0.50 per 1k traces
+- **Extended traces（長期保持）**: 400日間の長期保持が必要な場合
+  - Base traces: 14日間保持、$0.50 per 1k traces
+  - Extended traces: 400日間保持、$5.00 per 1k traces
+  - Base traceをExtended traceにアップグレード: $4.50 per 1k traces
+- **Bulk data export（一括データエクスポート）**: 大量のデータをエクスポートする場合
+
+詳細な料金情報については、[LangChainの料金ページ](https://www.langchain.com/pricing)を参照してください。
+
 ## トレーシングの有効化
 
 ### 基本的な設定
