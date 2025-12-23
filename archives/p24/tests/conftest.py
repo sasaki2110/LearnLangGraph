@@ -11,12 +11,25 @@ from my_agent.utils.tools import add, multiply, divide
 from langgraph.graph import StateGraph, START, END
 
 
+"""
+チェックポインターのフィクスチャ
+
+テスト用のモックLLMをコンパイルする際に、スレッドIDを使ったスレッド管理を行うため、
+スレッドIDを使ったチェックポインターを使用する。
+
+テスト用なので、メモリで短期記憶を行う。
+"""
 @pytest.fixture
 def checkpointer():
     """チェックポインタフィクスチャ"""
     return MemorySaver()
 
+"""
+モックLLMのフィクスチャ
 
+モックLLMを作成する。
+モックLLMは、ツール呼び出しをモックして、ツール呼び出し後のレスポンスを返す。
+"""
 @pytest.fixture
 def mock_llm():
     """モックLLMフィクスチャ"""
