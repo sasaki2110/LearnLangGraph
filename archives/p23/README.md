@@ -1,4 +1,4 @@
-# p12v2 - LangGraph クイックスタート（構造化版）
+# p23 - LangGraph クイックスタート（構造化版）
 
 このプロジェクトは、P23_application_structure.mdに従った構造で、計算エージェントを実装したものです。
 LangGraph Studio（`langgraph dev`）で使用できます。
@@ -6,7 +6,7 @@ LangGraph Studio（`langgraph dev`）で使用できます。
 ## 構造
 
 ```
-p12v2/
+p23/
 ├── my_agent/              # プロジェクトコード
 │   ├── utils/             # グラフ用のユーティリティ
 │   │   ├── __init__.py
