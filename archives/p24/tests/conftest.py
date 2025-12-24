@@ -29,6 +29,19 @@ def checkpointer():
 
 モックLLMを作成する。
 モックLLMは、ツール呼び出しをモックして、ツール呼び出し後のレスポンスを返す。
+
+このモックは、bind_tools()をモックしている。
+つまり、正式版の
+
+tools = [add, multiply, divide]
+model_with_tools = model.bind_tools(tools)
+をモックするもの。
+
+bind_tools()が返すのは、bound_mock。（これがLLM相当の動きをするオブジェクト）
+bound_mock.invoke()が呼び出されたときに、invoke()が呼び出される。
+
+llm_call()が呼び出されたときに、bound_mock.invoke()が呼び出される。
+（逆に言うと、llm_call()に、このmock_llmを渡す。）
 """
 @pytest.fixture
 def mock_llm():
@@ -58,45 +71,12 @@ def mock_llm():
     mock.bind_tools = bind_tools
     return mock
 
+"""
+モックLLMを使用したグラフフィクスチャ
 
-@pytest.fixture
-def mock_llm_with_tools():
-    """ツール呼び出しを含むモックLLMフィクスチャ"""
-    mock = Mock()
-    
-    # bind_tools()をモック（実際のLLMのように動作）
-    def bind_tools(tools):
-        bound_mock = Mock()
-        
-        # 状態に基づいてレスポンスを変更
-        def invoke(messages):
-            # ツールメッセージが含まれている場合は、ツール呼び出しなしのレスポンスを返す
-            from langchain.messages import ToolMessage
-            has_tool_message = any(isinstance(msg, ToolMessage) for msg in messages)
-            
-            if has_tool_message:
-                # ツール呼び出し後のレスポンス（ツール呼び出しなし）
-                return AIMessage(content="The result is 5.")
-            else:
-                # 最初の呼び出し（ツール呼び出しあり）
-                return AIMessage(
-                    content="I'll calculate that for you.",
-                    tool_calls=[
-                        {
-                            "name": "add",
-                            "args": {"a": 2, "b": 3},
-                            "id": "call_123"
-                        }
-                    ]
-                )
-        
-        bound_mock.invoke.side_effect = invoke
-        return bound_mock
-    
-    mock.bind_tools = bind_tools
-    return mock
-
-
+グラフ自体はLangGraphのStateGraphを使用して、通常通りにグラフを構築する。
+ただし、LLMをモックしたものを使用する。
+"""
 @pytest.fixture
 def graph_with_mock_llm(mock_llm):
     """モックLLMを使用したグラフフィクスチャ"""

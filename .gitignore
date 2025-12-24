@@ -15,3 +15,11 @@ ENV/
 
 # LangGraph API キャッシュとチェックポイント（実行時に自動生成される）
 .langgraph_api/
+
+# pytest キャッシュ（実行時に自動生成される）
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python

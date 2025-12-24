@@ -2,10 +2,7 @@
 基本的なテスト：グラフの実行テストと個別ノードのテスト
 """
 import pytest
-from langchain_core.messages import HumanMessage, AIMessage
-from my_agent.utils.state import MessagesState
-from tests.conftest import checkpointer, compiled_graph_with_mock, mock_llm_with_tools
-
+from langchain_core.messages import HumanMessage
 
 def test_basic_agent_execution(compiled_graph_with_mock):
     """基本的なグラフ実行のテスト（LLMモック）"""

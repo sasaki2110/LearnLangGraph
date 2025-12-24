@@ -4,7 +4,7 @@ pytestフィクスチャの使用テスト
 import pytest
 from langchain_core.messages import HumanMessage
 from my_agent.utils.state import MessagesState
-from tests.conftest import checkpointer, compiled_graph_with_mock, mock_llm, mock_llm_with_tools
+from tests.conftest import checkpointer, compiled_graph_with_mock, mock_llm
 
 
 def test_with_fixtures(compiled_graph_with_mock):
