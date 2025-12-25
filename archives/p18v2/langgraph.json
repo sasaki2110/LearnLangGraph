@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "langchain",
+    "langgraph",
+    "./my_agent"
+  ],
+  "graphs": {
+    "simple_interrupts": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
