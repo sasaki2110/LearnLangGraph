@@ -45,8 +45,13 @@ npx create-agent-chat-app --project-name my-chat-ui
 cd my-chat-ui
 
 # 依存関係をインストールして起動
+# pnpmを使用する場合:
 pnpm install
 pnpm dev
+
+# または、npmを使用する場合:
+npm install
+npm run dev
 ```
 
 #### 方法2: リポジトリをクローン
@@ -57,10 +62,18 @@ git clone https://github.com/langchain-ai/agent-chat-ui.git
 cd agent-chat-ui
 
 # 依存関係をインストール
+# pnpmを使用する場合:
 pnpm install
 
+# または、npmを使用する場合:
+npm install
+
 # 開発サーバーを起動
+# pnpmを使用する場合:
 pnpm dev
+
+# または、npmを使用する場合:
+npm run dev
 ```
 
 アプリケーションは`http://localhost:3000`でアクセスできます。
@@ -69,11 +82,32 @@ pnpm dev
 
 Agent Chat UIは、ローカルエージェントとデプロイ済みエージェントの両方に接続できます。
 
+### ローカルエージェントサーバーの起動
+
+ローカルエージェントに接続するには、まずローカルでエージェントサーバーを起動する必要があります。
+
+プロジェクトのルートディレクトリで以下のコマンドを実行します：
+
+```bash
+langgraph dev
+```
+
+このコマンドを実行すると、ポート2024でAPIエンドポイントが起動します：
+
+- **APIエンドポイント**: `http://localhost:2024`（または`http://127.0.0.1:2024`）
+
+**注意**: 
+- サーバーが起動している間は、このターミナルを開いたままにしておく必要があります
+- ポート2024が既に使用されている場合は、エラーが発生します
+- 詳細は[LangGraph Studio](./P25_studio.md)のドキュメントを参照してください
+
 ### 接続設定
 
 Agent Chat UIを起動すると、以下の情報を入力する必要があります：
 
-1. **Graph ID**: グラフ名（`langgraph.json`ファイルの`graphs`キーで確認）
+1. **Graph ID**: グラフ名（`langgraph.json`ファイルの`graphs`キーで定義されている名前を指定）
+   - `langgraph.json`の`graphs`キーを確認し、そこに定義されているグラフ名を使用します
+   - 例: `langgraph.json`に`"graphs": { "calculator_agent": "./my_agent/agent.py:graph" }`とある場合、`graphId`は`"calculator_agent"`を指定します
 2. **Deployment URL**: エージェントサーバーのエンドポイント
    - ローカル開発: `http://localhost:2024`
    - デプロイ環境: デプロイ済みエージェントのURL
@@ -83,6 +117,7 @@ Agent Chat UIを起動すると、以下の情報を入力する必要があり�
 
 #### ローカルエージェントに接続
 
+**一般的な例**:
 ```json
 {
   "graphId": "agent",
@@ -90,6 +125,27 @@ Agent Chat UIを起動すると、以下の情報を入力する必要があり�
   "langsmithApiKey": ""  // ローカルの場合は空でOK
 }
 ```
+
+**具体的な例（archives/p23の場合）**:
+`archives/p23/langgraph.json`に以下のように定義されている場合：
+```json
+{
+  "graphs": {
+    "calculator_agent": "./my_agent/agent.py:graph"
+  }
+}
+```
+
+この場合、`graphId`には`"calculator_agent"`を指定します：
+```json
+{
+  "graphId": "calculator_agent",
+  "deploymentUrl": "http://localhost:2024",
+  "langsmithApiKey": ""
+}
+```
+
+**重要**: `graphId`は、プロジェクトの`langgraph.json`ファイルの`graphs`キーで定義されている名前と完全に一致させる必要があります。
 
 #### デプロイ済みエージェントに接続
 
