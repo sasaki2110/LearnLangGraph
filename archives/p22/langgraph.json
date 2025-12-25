@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "langchain",
+    "langgraph",
+    "./my_agent"
+  ],
+  "graphs": {
+    "time_travel": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
