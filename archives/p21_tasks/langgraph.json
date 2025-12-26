@@ -1,0 +1,11 @@
+{
+  "dependencies": [
+    "langchain",
+    "./my_agent"
+  ],
+  "graphs": {
+    "url_processor": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
