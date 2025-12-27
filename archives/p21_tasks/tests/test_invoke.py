@@ -16,8 +16,14 @@ def test_graph_invoke(graph_with_checkpointer):
     # テスト用のURL
     test_urls = ["https://www.example.com"]
     
-    # グラフの実行
+    # グラフの実行（中断が発生する可能性がある）
     result = graph_with_checkpointer.invoke({"urls": test_urls}, config)
+    
+    # 中断が発生した場合は、承認して再開
+    if "__interrupt__" in result:
+        # ユーザー承認で再開
+        user_response = {"approved": True}
+        result = graph_with_checkpointer.invoke(Command(resume=user_response), config=config)
     
     # 結果の検証
     assert "results" in result
@@ -39,8 +45,14 @@ def test_graph_invoke_multiple_urls(graph_with_checkpointer):
         "https://www.python.org"
     ]
     
-    # グラフの実行
+    # グラフの実行（中断が発生する可能性がある）
     result = graph_with_checkpointer.invoke({"urls": test_urls}, config)
+    
+    # 中断が発生した場合は、承認して再開
+    if "__interrupt__" in result:
+        # ユーザー承認で再開
+        user_response = {"approved": True}
+        result = graph_with_checkpointer.invoke(Command(resume=user_response), config=config)
     
     # 結果の検証
     assert "results" in result
@@ -59,11 +71,21 @@ def test_graph_invoke_with_same_thread_id(graph_with_checkpointer):
     # テスト用のURL
     test_urls = ["https://www.example.com"]
     
-    # 最初の実行
+    # 最初の実行（中断が発生する可能性がある）
     result1 = graph_with_checkpointer.invoke({"urls": test_urls}, config)
     
-    # 2回目の実行（同じスレッドID）
+    # 中断が発生した場合は、承認して再開
+    if "__interrupt__" in result1:
+        user_response = {"approved": True}
+        result1 = graph_with_checkpointer.invoke(Command(resume=user_response), config=config)
+    
+    # 2回目の実行（同じスレッドID、中断が発生する可能性がある）
     result2 = graph_with_checkpointer.invoke({"urls": test_urls}, config)
+    
+    # 中断が発生した場合は、承認して再開
+    if "__interrupt__" in result2:
+        user_response = {"approved": True}
+        result2 = graph_with_checkpointer.invoke(Command(resume=user_response), config=config)
     
     # 結果が同じであることを確認（タスクが再実行されず、永続化レイヤーから結果が取得される）
     assert result1["results"] == result2["results"]
@@ -78,8 +100,13 @@ def test_graph_invoke_state_structure(graph_with_checkpointer):
     # テスト用のURL
     test_urls = ["https://www.example.com"]
     
-    # グラフの実行
+    # グラフの実行（中断が発生する可能性がある）
     result = graph_with_checkpointer.invoke({"urls": test_urls}, config)
+    
+    # 中断が発生した場合は、承認して再開
+    if "__interrupt__" in result:
+        user_response = {"approved": True}
+        result = graph_with_checkpointer.invoke(Command(resume=user_response), config=config)
     
     # 状態の構造を検証
     assert isinstance(result, dict)
