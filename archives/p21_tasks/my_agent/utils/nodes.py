@@ -55,18 +55,21 @@ def _process_data(data: str) -> str:
 @task
 def task_1() -> str:
     """タスク1（テスト用）"""
+    logger.debug("✅ [TASK] task_1 が呼ばれました")
     return "task_1_result"
 
 
 @task
 def task_2() -> str:
     """タスク2（テスト用）"""
+    logger.debug("✅ [TASK] task_2 が呼ばれました")
     return "task_2_result"
 
 
 @task
 def task_3() -> str:
     """タスク3（テスト用）"""
+    logger.debug("✅ [TASK] task_3 が呼ばれました")
     return "task_3_result"
 
 
@@ -83,6 +86,7 @@ def call_api(state: State) -> dict:
         # 中断してユーザーの承認を求める
         # 再開時、interrupt()の戻り値として承認結果が返される
         logger.info("⏸️ [NODE] ユーザーの承認を待機します")
+        # 下記interruptで、GraphInterruptが発生します。
         user_response = interrupt({
             "message": "API呼び出しを実行しますか？ (y/n)",
             "urls": state['urls']
@@ -193,6 +197,7 @@ def node_with_multiple_tasks_and_interrupt(state: State) -> dict:
         
         # ここで中断（task_1とtask_2の結果は既に永続化されている）
         logger.info("⏸️ [NODE] 中断してユーザーの承認を待機します")
+        # 下記interruptで、GraphInterruptが発生します。
         user_response = interrupt({
             "message": "task_1とtask_2が完了しました。続行しますか？ (y/n)",
             "task_1_result": result1,
