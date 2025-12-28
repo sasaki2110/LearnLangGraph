@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "langchain",
+    "langchain-openai",
+    "./my_agent"
+  ],
+  "graphs": {
+    "p31_streaming": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
