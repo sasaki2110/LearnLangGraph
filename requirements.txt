@@ -1,41 +1,88 @@
-# LangGraph 学習プロジェクト - 依存関係
-# このファイルに必要なパッケージを追記し、以下のコマンドでインストールします:
-# pip install -r requirements.txt
-#
-# ⚠️ 重要: Python 3.14に関する制限事項
-# langgraph-cli[inmem]は公式にPython 3.13までサポートしています。
-# Python 3.14を使用する場合、jsonschema-rsのビルドエラーが発生する可能性があります。
-# 推奨: Python 3.13を使用してください。
-# 
-# Python 3.14でインストールを試みる場合（非推奨）:
-# 1. 環境変数を設定: export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
-# 2. それでもビルドが失敗する場合は、Python 3.13の使用を検討してください
-
-# LangGraph - AIエージェントのオーケストレーションフレームワーク
-langgraph>=0.1.0
-
-# LangGraph CLI - Studioを使用するために必要（P25_studio.md参照）
-# [inmem]オプションは、メモリベースのチェックポインタを使用する場合に必要
-# ⚠️ 公式サポート: Python 3.13まで（Python 3.14は非サポート）
-langgraph-cli[inmem]>=0.1.0
-
-# LangChain - LLMやツールとの統合（推奨）
-# 注意: Python 3.10以上が必要
-langchain>=0.1.0
-
-# LangChain OpenAI統合（OpenAI APIを使用する場合に必要）
-langchain-openai>=0.1.0
-
-# 環境変数管理
-python-dotenv>=1.0.0
-
-# テスト用パッケージ
-pytest>=7.0.0
-pytest-asyncio>=0.21.0
-pytest-mock>=3.10.0
-
-# プロバイダー固有のパッケージ
-# OpenAI APIを使用する場合
-openai>=1.0.0
-# Anthropic: anthropic
-
+annotated-types==0.7.0
+anyio==4.12.0
+attrs==25.4.0
+blockbuster==1.5.26
+certifi==2025.11.12
+cffi==2.0.0
+charset-normalizer==3.4.4
+click==8.3.1
+cloudpickle==3.1.2
+cryptography==46.0.3
+distro==1.9.0
+forbiddenfruit==0.1.4
+googleapis-common-protos==1.72.0
+grpcio==1.76.0
+grpcio-tools==1.75.1
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+httpx-sse==0.4.3
+idna==3.11
+importlib_metadata==8.7.1
+iniconfig==2.3.0
+jiter==0.12.0
+jsonpatch==1.33
+jsonpointer==3.0.0
+jsonschema==4.25.1
+jsonschema-specifications==2025.9.1
+jsonschema_rs==0.29.1
+langchain==1.2.0
+langchain-core==1.2.4
+langchain-mcp-adapters==0.2.1
+langchain-openai==1.1.6
+langgraph==1.0.5
+langgraph-api==0.6.11
+langgraph-checkpoint==3.0.1
+langgraph-cli==0.4.11
+langgraph-prebuilt==1.0.5
+langgraph-runtime-inmem==0.20.1
+langgraph-sdk==0.3.1
+langsmith==0.5.0
+mcp==1.25.0
+openai==2.14.0
+opentelemetry-api==1.39.1
+opentelemetry-exporter-otlp-proto-common==1.39.1
+opentelemetry-exporter-otlp-proto-http==1.39.1
+opentelemetry-proto==1.39.1
+opentelemetry-sdk==1.39.1
+opentelemetry-semantic-conventions==0.60b1
+orjson==3.11.5
+ormsgpack==1.12.1
+packaging==25.0
+pluggy==1.6.0
+protobuf==6.33.2
+pycparser==2.23
+pydantic==2.12.5
+pydantic-settings==2.12.0
+pydantic_core==2.41.5
+Pygments==2.19.2
+PyJWT==2.10.1
+pytest==9.0.2
+pytest-asyncio==1.3.0
+pytest-mock==3.15.1
+python-dotenv==1.2.1
+python-multipart==0.0.21
+PyYAML==6.0.3
+referencing==0.37.0
+regex==2025.11.3
+requests==2.32.5
+requests-toolbelt==1.0.0
+rpds-py==0.30.0
+setuptools==80.9.0
+sniffio==1.3.1
+sse-starlette==2.1.3
+starlette==0.50.0
+structlog==25.5.0
+tenacity==9.1.2
+tiktoken==0.12.0
+tqdm==4.67.1
+truststore==0.10.4
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+urllib3==2.6.2
+uuid_utils==0.12.0
+uvicorn==0.40.0
+watchfiles==1.1.1
+xxhash==3.6.0
+zipp==3.23.0
+zstandard==0.25.0

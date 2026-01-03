@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "langchain",
+    "langchain-openai",
+    "./my_agent"
+  ],
+  "graphs": {
+    "p32_mcp_postgres": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
