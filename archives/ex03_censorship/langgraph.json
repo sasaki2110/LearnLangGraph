@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "langchain",
+    "langchain-openai",
+    "./my_agent"
+  ],
+  "graphs": {
+    "ex03_censorship": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
