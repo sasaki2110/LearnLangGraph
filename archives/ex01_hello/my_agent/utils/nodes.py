@@ -12,19 +12,24 @@ logger = get_logger('nodes')
 def detect_language(state: State, llm):
     """言語を判定するLLMノード"""
     logger.info("🌐 [DETECT] 言語判定を開始します")
+    logger.debug(f"📊 [DETECT] 現在の状態: messages数={len(state.get('messages', []))}")
     
     try:
-        # 最新のメッセージを取得
-        messages = state.get("messages", [])
-        if not messages or len(messages) == 0:
+        # メッセージが存在する場合、最後のメッセージから内容を取得
+        if state.get("messages") and len(state["messages"]) > 0:
+            # 最後のメッセージの内容を取得
+            last_message = state["messages"][-1]
+            # 辞書形式のメッセージ（LangSmithから来る場合）にも対応
+            if isinstance(last_message, dict):
+                user_input = last_message.get("content", "").strip()
+            elif hasattr(last_message, "content"):
+                user_input = last_message.content.strip()
+            else:
+                user_input = str(last_message).strip()
+            logger.info(f"✅ [DETECT] メッセージから内容を取得しました: {user_input[:50]}...")
+        else:
             logger.warning("⚠️ [DETECT] メッセージが存在しません")
             return {"language": "english"}  # デフォルトは英語
-        
-        last_message = messages[-1]
-        if hasattr(last_message, "content"):
-            user_input = last_message.content.strip()
-        else:
-            user_input = str(last_message).strip()
         
         logger.info(f"📝 [DETECT] ユーザー入力: {user_input[:50]}...")
         
@@ -66,18 +71,21 @@ def greet_in_english(state: State, llm):
     logger.info("👋 [ENGLISH] 英語での挨拶生成を開始します")
     
     try:
-        # 最新のユーザーメッセージ（HumanMessage）を取得
+        # メッセージから最初のユーザーメッセージを取得
         messages = state.get("messages", [])
         user_input = None
         
-        # HumanMessageを後ろから探す
-        for msg in reversed(messages):
-            if isinstance(msg, HumanMessage):
-                if hasattr(msg, "content"):
-                    user_input = msg.content.strip()
-                else:
-                    user_input = str(msg).strip()
-                break
+        # 最初のメッセージを取得（判定メッセージを除く）
+        if messages and len(messages) > 0:
+            # 最初のメッセージを取得
+            first_message = messages[0]
+            # 辞書形式のメッセージ（LangSmithから来る場合）にも対応
+            if isinstance(first_message, dict):
+                user_input = first_message.get("content", "").strip()
+            elif hasattr(first_message, "content"):
+                user_input = first_message.content.strip()
+            else:
+                user_input = str(first_message).strip()
         
         if not user_input:
             logger.warning("⚠️ [ENGLISH] ユーザーメッセージが見つかりません")
@@ -116,18 +124,21 @@ def greet_in_japanese(state: State, llm):
     logger.info("👋 [JAPANESE] 日本語での挨拶生成を開始します")
     
     try:
-        # 最新のユーザーメッセージ（HumanMessage）を取得
+        # メッセージから最初のユーザーメッセージを取得
         messages = state.get("messages", [])
         user_input = None
         
-        # HumanMessageを後ろから探す
-        for msg in reversed(messages):
-            if isinstance(msg, HumanMessage):
-                if hasattr(msg, "content"):
-                    user_input = msg.content.strip()
-                else:
-                    user_input = str(msg).strip()
-                break
+        # 最初のメッセージを取得（判定メッセージを除く）
+        if messages and len(messages) > 0:
+            # 最初のメッセージを取得
+            first_message = messages[0]
+            # 辞書形式のメッセージ（LangSmithから来る場合）にも対応
+            if isinstance(first_message, dict):
+                user_input = first_message.get("content", "").strip()
+            elif hasattr(first_message, "content"):
+                user_input = first_message.content.strip()
+            else:
+                user_input = str(first_message).strip()
         
         if not user_input:
             logger.warning("⚠️ [JAPANESE] ユーザーメッセージが見つかりません")
