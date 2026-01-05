@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "langchain",
+    "langchain-openai",
+    "./my_agent"
+  ],
+  "graphs": {
+    "ex99_sns_post_editor": "./my_agent/agent.py:graph"
+  },
+  "env": "../../.env"
+}
+
