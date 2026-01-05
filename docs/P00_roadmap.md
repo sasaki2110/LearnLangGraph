@@ -110,6 +110,29 @@
   - パフォーマンス分析
   - 参考: https://docs.langchain.com/oss/python/langgraph/observability
 
+### マルチエージェント編
+
+- **[P29: Agents](./p29_agents.md)**
+  - エージェントの基本概念
+  - ツールの呼び出しとループ処理
+  - エージェントの作成方法
+  - 実装例とベストプラクティス
+  - 参考: https://reference.langchain.com/python/langgraph/agents/
+
+- **[P30: Supervisor](./p30_supervisor.md)**
+  - スーパーバイザーパターンの概念
+  - 複数のエージェントの管理
+  - タスクの割り当てと結果の統合
+  - 実装例とベストプラクティス
+  - 参考: https://reference.langchain.com/python/langgraph/supervisor/
+
+- **[P31: Swarm](./p31_swarm.md)**
+  - スワームパターンの概念
+  - 複数のエージェントの協調
+  - 分散処理と自己組織化
+  - 実装例とベストプラクティス
+  - 参考: https://reference.langchain.com/python/langgraph/swarm/
+
 ## 🎯 推奨学習パス
 
 ### 初心者向けパス
@@ -227,6 +250,17 @@ LangGraphアプリケーションの品質を保証するためのテスト戦�
 
 #### P28: Observability
 LangSmithを使った可観測性の実現と、ログ・トレーシング・モニタリングの設定。
+
+### マルチエージェント編
+
+#### P29: Agents
+エージェントの基本概念と、ツールの呼び出しやループ処理を通じた実装方法。
+
+#### P30: Supervisor
+複数のエージェントを管理し、タスクの割り当てや結果の統合を行うスーパーバイザーパターン。
+
+#### P31: Swarm
+複数のエージェントが協調してタスクを遂行するスワームパターンと、分散処理の実装方法。
 
 ## 🔗 参考資料
 
