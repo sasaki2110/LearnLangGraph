@@ -14,12 +14,14 @@ from my_agent.utils.logging_config import get_logger
 logger = get_logger('nodes')
 
 
-def convert_relative_date(deadline_str: str) -> Optional[str]:
+def convert_relative_date(deadline_str: str, base_date: Optional[str] = None) -> Optional[str]:
     """
     相対的な日付表現（「明日」「3日後」など）をyyyy-mm-dd形式に変換
+    既存の期限を基準にした相対的な変更（「1日伸ばす」など）にも対応
     
     Args:
         deadline_str: 期限の文字列（相対的な日付表現またはyyyy-mm-dd形式）
+        base_date: 基準となる日付（yyyy-mm-dd形式）。既存の期限がある場合に指定
         
     Returns:
         yyyy-mm-dd形式の日付文字列、変換できない場合はNone
@@ -28,7 +30,15 @@ def convert_relative_date(deadline_str: str) -> Optional[str]:
         return None
     
     deadline_str = deadline_str.strip()
-    today = datetime.now().date()
+    
+    # 基準日を決定（既存の期限がある場合はそれを使用、ない場合は今日）
+    if base_date:
+        try:
+            base = datetime.strptime(base_date, "%Y-%m-%d").date()
+        except ValueError:
+            base = datetime.now().date()
+    else:
+        base = datetime.now().date()
     
     # 既にyyyy-mm-dd形式の場合はそのまま返す
     try:
@@ -40,7 +50,38 @@ def convert_relative_date(deadline_str: str) -> Optional[str]:
     # 相対的な日付表現を処理
     deadline_lower = deadline_str.lower()
     
-    # 「明日」「あした」
+    # 「N日伸ばす」「N日延ばす」「N日後に」のパターン（既存の期限を基準に加算）
+    match = re.search(r'(\d+)\s*日\s*(?:伸ばす|延ばす|後に|後)', deadline_lower)
+    if match:
+        days = int(match.group(1))
+        target_date = base + timedelta(days=days)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # 「N日前に」「N日早く」のパターン（既存の期限を基準に減算）
+    match = re.search(r'(\d+)\s*日\s*(?:前に|早く|前)', deadline_lower)
+    if match:
+        days = int(match.group(1))
+        target_date = base - timedelta(days=days)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # 「N週間伸ばす」「N週間延ばす」のパターン
+    match = re.search(r'(\d+)\s*週間\s*(?:伸ばす|延ばす|後に|後)', deadline_lower)
+    if match:
+        weeks = int(match.group(1))
+        target_date = base + timedelta(weeks=weeks)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # 「N週間前に」「N週間早く」のパターン
+    match = re.search(r'(\d+)\s*週間\s*(?:前に|早く|前)', deadline_lower)
+    if match:
+        weeks = int(match.group(1))
+        target_date = base - timedelta(weeks=weeks)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # 以下は今日を基準とした絶対的な日付表現
+    today = datetime.now().date()
+    
+    # 「明日」「あした」（今日を基準）
     if deadline_lower in ["明日", "あした", "あす", "tomorrow"]:
         target_date = today + timedelta(days=1)
         return target_date.strftime("%Y-%m-%d")
@@ -148,19 +189,21 @@ def extract_operation(state: State, llm):
 操作の種類は以下のいずれかです：
 - "add": 新しいタスクを追加
 - "delete": タスクを削除（内容の部分一致で検索）
-- "update_status": タスクのステータスを更新（done/undoneの切り替え）
+- "update": タスクを更新（内容、期限、ステータスのいずれかまたは複数を更新）
 - "none": 操作なし
 
 抽出する情報：
-- operation: 操作の種類（"add", "delete", "update_status", "none"のいずれか）
-- content: タスク内容（追加・削除・更新の対象となるタスクの内容）
-- deadline: 期限（yyyy-mm-dd形式、または「明日」「3日後」などの相対的な日付表現、追加時のみ必須）
-- status: ステータス（"done"または"undone"、update_status時のみ必須）
+- operation: 操作の種類（"add", "delete", "update", "none"のいずれか）
+- content: タスク内容（追加・削除・更新の対象となるタスクの内容。update時は検索キーとして使用）
+- new_content: 新しいタスク内容（update時のみ、内容を変更する場合に指定）
+- deadline: 期限（yyyy-mm-dd形式、または「明日」「3日後」などの絶対的な日付表現、または「1日伸ばす」「2日延ばす」などの既存期限を基準にした相対的な変更表現。add時は必須、update時は変更する場合に指定）
+- status: ステータス（"done"または"undone"。update時は変更する場合に指定）
 
 JSON形式で返答してください。例：
 {{
     "operation": "add",
     "content": "資料作成",
+    "new_content": null,
     "deadline": "2024-01-10",
     "status": null
 }}
@@ -170,6 +213,7 @@ JSON形式で返答してください。例：
 {{
     "operation": "delete",
     "content": "資料作成",
+    "new_content": null,
     "deadline": null,
     "status": null
 }}
@@ -177,10 +221,31 @@ JSON形式で返答してください。例：
 または
 
 {{
-    "operation": "update_status",
+    "operation": "update",
     "content": "資料作成",
-    "deadline": null,
+    "new_content": null,
+    "deadline": "2024-01-15",
     "status": "done"
+}}
+
+または（複数フィールドを同時に更新）
+
+{{
+    "operation": "update",
+    "content": "資料作成",
+    "new_content": "報告書作成",
+    "deadline": "2024-01-15",
+    "status": "done"
+}}
+
+または（既存期限を基準にした相対的な変更）
+
+{{
+    "operation": "update",
+    "content": "資料作成",
+    "new_content": null,
+    "deadline": "1日伸ばす",
+    "status": null
 }}
 
 {todo_list_summary}
@@ -211,7 +276,23 @@ JSON形式で返答してください。例：
             # 期限が相対的な日付表現の場合は変換
             if extracted_data.get("deadline"):
                 original_deadline = extracted_data.get("deadline")
-                converted_deadline = convert_relative_date(original_deadline)
+                
+                # update操作の場合、既存の期限を基準にする
+                base_date = None
+                if extracted_data.get("operation") == "update":
+                    # 該当するタスクの既存の期限を取得
+                    search_content = extracted_data.get("content", "").strip()
+                    if search_content:
+                        todo_list = state.get("todo_list", [])
+                        for todo in todo_list:
+                            if search_content in todo.get("content", ""):
+                                existing_deadline = todo.get("deadline", "")
+                                if existing_deadline:
+                                    base_date = existing_deadline
+                                    logger.debug(f"📅 [EXTRACT] 既存の期限を基準にします: {base_date}")
+                                break
+                
+                converted_deadline = convert_relative_date(original_deadline, base_date=base_date)
                 if converted_deadline:
                     if converted_deadline != original_deadline:
                         logger.info(f"📅 [EXTRACT] 相対日付を変換しました: {original_deadline} → {converted_deadline}")
@@ -319,27 +400,70 @@ def manage_todo_list(state: State):
                 recent_change = f"「{content}」を含むタスクが見つかりませんでした。"
                 logger.warning(f"⚠️ [MANAGER] 削除対象のタスクが見つかりませんでした: {content[:50]}...")
         
-        elif operation == "update_status":
-            # ステータスを更新
-            new_status = extracted_data.get("status", "").strip().lower()
-            if new_status not in ["done", "undone"]:
+        elif operation == "update":
+            # タスクを更新（内容、期限、ステータスのいずれかまたは複数を更新）
+            new_content = extracted_data.get("new_content", "").strip() if extracted_data.get("new_content") else None
+            new_deadline = extracted_data.get("deadline", "").strip() if extracted_data.get("deadline") else None
+            new_status = extracted_data.get("status", "").strip().lower() if extracted_data.get("status") else None
+            
+            # 更新するフィールドがない場合はエラー
+            if not new_content and not new_deadline and not new_status:
+                logger.warning("⚠️ [MANAGER] 更新するフィールドが指定されていません")
+                return {
+                    "todo_list": todo_list,
+                    "recent_change": "更新するフィールドが指定されていませんでした。"
+                }
+            
+            # ステータスの検証
+            if new_status and new_status not in ["done", "undone"]:
                 logger.warning(f"⚠️ [MANAGER] 無効なステータス: {new_status}")
                 return {
                     "todo_list": todo_list,
                     "recent_change": f"無効なステータスが指定されました: {new_status}"
                 }
             
+            # 期限の形式を検証（yyyy-mm-dd形式）
+            if new_deadline:
+                try:
+                    datetime.strptime(new_deadline, "%Y-%m-%d")
+                except ValueError:
+                    logger.warning(f"⚠️ [MANAGER] 期限の形式が不正です: {new_deadline}")
+                    return {
+                        "todo_list": todo_list,
+                        "recent_change": f"期限の形式が不正です: {new_deadline}"
+                    }
+            
             updated_count = 0
+            changes = []
+            
             for todo in todo_list:
                 if content in todo["content"]:
-                    old_status = todo["status"]
-                    todo["status"] = new_status
+                    # 各フィールドを更新
+                    if new_content:
+                        old_content = todo["content"]
+                        todo["content"] = new_content
+                        changes.append(f"内容を「{old_content}」から「{new_content}」に変更")
+                        logger.info(f"✅ [MANAGER] タスクの内容を更新しました: {old_content[:50]}... -> {new_content[:50]}...")
+                    
+                    if new_deadline:
+                        old_deadline = todo["deadline"]
+                        todo["deadline"] = new_deadline
+                        changes.append(f"期限を{old_deadline if old_deadline else '（期限なし）'}から{new_deadline}に変更")
+                        logger.info(f"✅ [MANAGER] タスクの期限を更新しました: {todo['content'][:50]}... ({old_deadline} -> {new_deadline})")
+                    
+                    if new_status:
+                        old_status = todo["status"]
+                        todo["status"] = new_status
+                        status_text = "完了" if new_status == "done" else "未完了"
+                        changes.append(f"ステータスを{status_text}に変更")
+                        logger.info(f"✅ [MANAGER] タスクのステータスを更新しました: {todo['content'][:50]}... ({old_status} -> {new_status})")
+                    
                     updated_count += 1
-                    logger.info(f"✅ [MANAGER] タスクのステータスを更新しました: {todo['content'][:50]}... ({old_status} -> {new_status})")
             
             if updated_count > 0:
-                status_text = "完了" if new_status == "done" else "未完了"
-                recent_change = f"「{content}」を含むタスクを{updated_count}件、{status_text}に更新しました。"
+                recent_change = f"「{content}」を含むタスクを{updated_count}件更新しました。"
+                if changes:
+                    recent_change += " " + "、".join(changes) + "。"
             else:
                 recent_change = f"「{content}」を含むタスクが見つかりませんでした。"
                 logger.warning(f"⚠️ [MANAGER] 更新対象のタスクが見つかりませんでした: {content[:50]}...")
